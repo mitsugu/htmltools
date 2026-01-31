@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+	<meta charset="UTF-8">
+	<title></title>
+	<link rel="stylesheet" href="autoslider.css" />
+	<script defer src="autoslider.js"></script>
+</head>
+<body>
+	<h3>スライダー1：縦長 (デフォルト)</h3>
+	<div class="slider-wrapper"
+	     data-auto-play="true"
+	     data-duration="3.0"
+	     data-aspect-ratio="512/763"
+		 data-max-width="512px">
+
+	    <button class="slider-btn prev">＜</button>
+	    <div class="slider-container">
+	        <div class="slide-item bg-w"><img src="fig2026011002.png" alt="縦長画像1"></div>
+	        <div class="slide-item bg-w"><img src="fig2026011003.png" alt="縦長画像2"></div>
+	        <div class="slide-item bg-w"><img src="fig2026011004.png" alt="縦長画像2"></div>
+	        <div class="slide-item bg-w"><img src="fig2026011005.png" alt="縦長画像2"></div>
+	        <div class="slide-item bg-w"><img src="fig2026011006.png" alt="縦長画像2"></div>
+	    </div>
+	    <button class="slider-btn next">＞</button>
+	    <div class="status-icon" style="display: none;"></div>
+	</div>
+
+	<hr style="margin: 50px 0;">
+
+	<h3>スライダー2：横長 (16:9)</h3>
+	<div class="slider-wrapper"
+	     data-auto-play="false"
+	     data-duration="4.0"
+	     data-aspect-ratio="3/2"
+		 data-max-width="704px">
+		<button class="slider-btn prev">＜</button>
+	    <div class="slider-container">
+	        <div class="slide-item bg-w"><img src="fig2026011001.png" alt="横長画像1"></div>
+	        <div class="slide-item bg-w"><img src="fig2026011007.png" alt="横長画像1"></div>
+	    </div>
+	    <button class="slider-btn next">＞</button>
+	    <div class="status-icon" style="display: none;"></div>
+	</div>
+</body>
+</html>
