@@ -1,0 +1,87 @@
+/* --- 前回の FAB スタイルを継承しつつ更新 --- */
+.fab {
+	anchor-name: --fab-anchor;
+	position: fixed;
+	top: 30px;
+	right: 30px;
+	width: 60px;
+	height: 60px;
+	border-radius: 50%;
+	background-color: #007aff;
+	border: none;
+	cursor: pointer;
+	box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+
+	/* 中央揃えの設定 */
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	transition: background-color 0.3s;
+}
+
+/* --- ハンバーガーメニューの構造 --- */
+.hamburger-box {
+	width: 24px;
+	height: 18px;
+	display: flex;
+	flex-direction: column;
+	justify-content: space-between;
+}
+
+.hamburger-line {
+	display: block;
+	width: 100%;
+	height: 2px;
+	background-color: white;
+	border-radius: 2px;
+	transition: transform 0.3s, opacity 0.3s;
+}
+
+/* --- 開いている時のアニメーション (:popover-open 疑似クラスを活用) --- */
+/* ボタン自体が popovertarget なので、メニューが開いている状態を検知して線を変形させます */
+.fab:has(+ #fab-menu:popover-open) .hamburger-line:nth-child(1) {
+  transform: translateY(8px) rotate(45deg);
+}
+
+.fab:has(+ #fab-menu:popover-open) .hamburger-line:nth-child(2) {
+  opacity: 0;
+}
+
+.fab:has(+ #fab-menu:popover-open) .hamburger-line:nth-child(3) {
+  transform: translateY(-8px) rotate(-45deg);
+}
+
+/* --- アンカー配置の設定（前回と同様） --- */
+.anchor-menu {
+	margin: 0;
+	padding: 0;
+	border: none;
+	background: transparent;
+	position-anchor: --fab-anchor;
+	bottom: anchor(top);
+	left: calc(anchor(left) - 9.6em);
+	margin-top: 15px;
+}
+
+/* メニュー内の装飾 */
+.menu-list {
+	background: white;
+	border-radius: 12px;
+	box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+	list-style: none;
+	padding: 8px 0;
+	min-width: 150px;
+}
+
+.menu-item {
+	width: 100%;
+	padding: 12px 20px;
+	border: none;
+	background: none;
+	text-align: left;
+	cursor: pointer;
+}
+
+.menu-item:hover {
+  background-color: #f5f5f7;
+}

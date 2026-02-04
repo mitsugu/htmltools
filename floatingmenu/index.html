@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+	<meta charset="UTF-8">
+	<title>floatingmenu サンプル</title>
+	<link rel="stylesheet" href="floatingmenu.css" />
+	<script defer src="floatingmenu.js"></script>
+</head>
+<body>
+	<button class="fab" id="fab-trigger" popovertarget="fab-menu" aria-label="メニューを開く">
+		<div class="hamburger-box">
+			<span class="hamburger-line"></span>
+			<span class="hamburger-line"></span>
+			<span class="hamburger-line"></span>
+		</div>
+	</button>
+
+	<div id="fab-menu" popover class="anchor-menu">
+		<ul class="menu-list">
+		<li><button class="menu-item">新規作成</button></li>
+		<li><button class="menu-item">設定</button></li>
+		<li><button class="menu-item">共有</button></li>
+		</ul>
+	</div>
+</body>
+</html>

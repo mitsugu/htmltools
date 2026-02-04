@@ -31,11 +31,67 @@
 **data-aspect-ratio:** 画像の横縦比 ex) 512/763  
 **data-max-width:** PC ブラウザでの画像の幅 ex) 512px  
 
+## floatingbuttom
+### これは何？
+　フローティングボタン
+### ファイル一覧
+* floatingbuttom.css
+* floatingbuttom.js
+### html の例
+```html
+<button type="button"
+	class="floating-btn-reservation"
+	data-click-target=".tab-btn[data-target='tab9']"
+	data-scroll-target=".tab-contents">
+	<span class="btn-icon">📅</span>ご予約
+</button>
+```
+### 設定可能データ
+**data-click-target:**  クリックしたい先の CSS セレクタ ex) .tab-btn[data-target='tab9']  
+**data-scroll-target:**  スクロールしたい先の CSS セレクター ex) .tab-contents  
+## floatingmenu
+### これは何？
+　フローティングメニュー
+### ファイル一覧
+* floatingmenu.css
+* floatingmenu.js
+### html の例
+```html
+<button class="fab" id="fab-trigger" popovertarget="fab-menu" aria-label="メニューを開く">
+	<div class="hamburger-box">
+		<span class="hamburger-line"></span>
+		<span class="hamburger-line"></span>
+		<span class="hamburger-line"></span>
+	</div>
+</button>
+
+<div id="fab-menu" popover class="anchor-menu">
+	<ul class="menu-list">
+	<li><button class="menu-item">新規作成</button></li>
+	<li><button class="menu-item">設定</button></li>
+	<li><button class="menu-item">共有</button></li>
+	</ul>
+</div>
+```
+### 設定可能データ
+　特になし
+
 ## hero
 ### これは何？
 　ヒーローセクション
 ### ファイル一覧
 * hero.css
+### html の例
+```html
+<header class="hero-viewport">
+	<img src="https://images.unsplash.com/photo-1506744038136-46273834b3fb" alt="ヘッダー画像" class="hero-img">
+	<div class="hero-overlay">
+		<h1 class="hero-title">Adventure Awaits</h1>
+	</div>
+</header>
+```
+### 設定可能データ
+　特になし
 
 ## opal
 ### これは何？
