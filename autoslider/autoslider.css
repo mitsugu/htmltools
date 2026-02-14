@@ -131,12 +131,13 @@
 
 /* --------------------------------------------------
    フルスクリーンモード設定
-   1. :fullscreen        (PC/Android API)
-   2. .ios-fullscreen    (iPhone CSS Hack)
+   修正点: aspect-ratio の強制解除と object-fit の固定
 -------------------------------------------------- */
 
-/* フルスクリーン時のコンテナ設定 */
+/* 1. コンテナ（外枠）の設定 */
+/* 標準API, Webkit, iOSハック共通 */
 .slider-wrapper:fullscreen,
+.slider-wrapper:-webkit-full-screen,
 .slider-wrapper.ios-fullscreen {
     background-color: black;
     width: 100vw;
@@ -151,7 +152,7 @@
     justify-content: center;
 }
 
-/* iPhone用CSSハック（画面いっぱいに固定） */
+/* iOS用固定配置 */
 .slider-wrapper.ios-fullscreen {
     position: fixed;
     top: 0; 
@@ -159,8 +160,10 @@
     z-index: 9999;
 }
 
-/* コンテナ自体の制限解除 */
+/* 2. スライダー本体の制限解除 */
+/* ここが重要: aspect-ratio: unset !important で比率固定を破壊します */
 .slider-wrapper:fullscreen .slider-container,
+.slider-wrapper:-webkit-full-screen .slider-container,
 .slider-wrapper.ios-fullscreen .slider-container {
     width: 100%;
     height: 100%;
@@ -170,23 +173,30 @@
     border-radius: 0;
 }
 
-/* 画像は必ず全体を表示（見切れないようにする） */
+/* 3. 画像の表示設定 */
+/* 強制的に object-fit: contain にして画面内に収めます */
 .slider-wrapper:fullscreen .slide-item img,
+.slider-wrapper:-webkit-full-screen .slide-item img,
 .slider-wrapper.ios-fullscreen .slide-item img {
     object-fit: contain !important;
+    width: 100%;
+    height: 100%;
 }
 
-/* ボタンの表示制御 */
+/* 4. ボタンの表示制御 */
 /* 全画面中は拡大ボタンを消す */
 .slider-wrapper:fullscreen .fs-btn,
+.slider-wrapper:-webkit-full-screen .fs-btn,
 .slider-wrapper.ios-fullscreen .fs-btn {
     display: none;
 }
 
 /* 全画面中（API版）は閉じるボタン不要（ESCで戻るため） */
-.slider-wrapper:fullscreen .close-btn {
+.slider-wrapper:fullscreen .close-btn,
+.slider-wrapper:-webkit-full-screen .close-btn {
     display: none; 
 }
+
 /* 全画面中（iOS版）は閉じるボタン必須 */
 .slider-wrapper.ios-fullscreen .close-btn {
     display: block !important; 
