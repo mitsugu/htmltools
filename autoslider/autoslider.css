@@ -3,7 +3,7 @@
     position: relative;
     margin: 0 auto;
     --img-fit: cover;
-    --bg-color: #eee;
+    --bg-color: #fff;
 }
 
 /* --- スライダー本体 --- */
