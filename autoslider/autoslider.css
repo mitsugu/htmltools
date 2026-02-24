@@ -6,8 +6,8 @@
     max-width: 512px;
     
     /* CSS変数（JSから制御）のデフォルト */
-    --img-fit: cover;    /* cover or contain */
-    --bg-color: #eee;    /* 背景色 */
+    --img-fit: cover;
+    --bg-color: #fff;
 }
 
 /* --- スライダー本体 --- */
