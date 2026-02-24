@@ -39,23 +39,106 @@
 	    <div class="status-icon" style="display: none;"></div>
 	</div>
 
-	<hr style="margin: 50px 0;">
+    <h3>スライダー1：縦長 (1枚表示 / 自動再生あり / ループあり)</h3>
+    <div class="slider-wrapper"
+         data-auto-play="true"
+         data-duration="3.0"
+         data-show="1"
+         data-step="1"
+         data-loop="true"
+         data-fit="contain"
+         data-aspect-ratio="512/763"
+         data-max-width="512px"
+         data-bg="#eee">
+        <button class="slider-btn fs-btn" aria-label="全画面表示">⛶</button>
+        <button class="slider-btn close-btn" style="display: none;" aria-label="閉じる">×</button>
+        <button class="slider-btn prev">＜</button>
+        <div class="slider-container">
+            <div class="slide-item"><img src="fig2026011002.png" alt="1"></div>
+            <div class="slide-item"><img src="fig2026011003.png" alt="2"></div>
+            <div class="slide-item"><img src="fig2026011004.png" alt="3"></div>
+        </div>
+        <button class="slider-btn next">＞</button>
+        <div class="status-icon" style="display: none;"></div>
+    </div>
 
-	<h3>スライダー2：横長 (16:9)</h3>
-	<div class="slider-wrapper"
-	     data-auto-play="false"
-	     data-duration="4.0"
-	     data-aspect-ratio="3/2"
-		 data-max-width="704px">
-		<button class="slider-btn fs-btn" aria-label="全画面表示">⛶</button>
-    	<button class="slider-btn close-btn" style="display: none;" aria-label="閉じる">×</button>
-		<button class="slider-btn prev">＜</button>
-	    <div class="slider-container">
-	        <div class="slide-item bg-w"><img src="fig2026011001.png" alt="横長画像1"></div>
-	        <div class="slide-item bg-w"><img src="fig2026011007.png" alt="横長画像1"></div>
-	    </div>
-	    <button class="slider-btn next">＞</button>
-	    <div class="status-icon" style="display: none;"></div>
-	</div>
+    <hr style="margin: 50px 0;">
+
+    <h3>スライダー2：横長 (1枚表示 / 長めの間隔 / ループなし)</h3>
+    <div class="slider-wrapper"
+         data-auto-play="true"
+         data-duration="6.0"
+         data-show="1"
+         data-step="1"
+         data-loop="false"
+         data-fit="contain"
+         data-aspect-ratio="3/2"
+         data-max-width="512px"
+         data-bg="#000">
+        <button class="slider-btn fs-btn">⛶</button>
+        <button class="slider-btn close-btn" style="display: none;">×</button>
+        <button class="slider-btn prev">＜</button>
+        <div class="slider-container">
+            <div class="slide-item"><img src="fig2026011001.png" alt="A"></div>
+            <div class="slide-item"><img src="fig2026011007.png" alt="B"></div>
+        </div>
+        <button class="slider-btn next">＞</button>
+        <div class="status-icon" style="display: none;"></div>
+    </div>
+
+    <hr style="margin: 50px 0;">
+
+    <h3>スライダー3：複数枚 (3枚表示 / 2枚ずつ移動 / 空欄防止)</h3>
+    <div class="slider-wrapper"
+         data-auto-play="true"
+         data-duration="4.0"
+         data-show="3"
+         data-step="2"
+         data-loop="true"
+         data-fit="contain"
+         data-aspect-ratio="1/1"
+         data-max-width="512px"
+         data-bg="#ddd">
+        <button class="slider-btn fs-btn">⛶</button>
+        <button class="slider-btn close-btn" style="display: none;">×</button>
+        <button class="slider-btn prev">＜</button>
+        <div class="slider-container">
+            <div class="slide-item"><img src="fig2026011001.png" alt="1"></div>
+            <div class="slide-item"><img src="fig2026011002.png" alt="2"></div>
+            <div class="slide-item"><img src="fig2026011003.png" alt="3"></div>
+            <div class="slide-item"><img src="fig2026011004.png" alt="4"></div>
+            <div class="slide-item"><img src="fig2026011005.png" alt="5"></div>
+            <div class="slide-item"><img src="fig2026011006.png" alt="6"></div>
+            <div class="slide-item"><img src="fig2026011007.png" alt="7"></div>
+        </div>
+        <button class="slider-btn next">＞</button>
+        <div class="status-icon" style="display: none;"></div>
+    </div>
+
+    <hr style="margin: 50px 0;">
+
+    <h3>スライダー4：スライド無効 (表示設定枚数 = 画像枚数)</h3>
+    <div class="slider-wrapper"
+         data-auto-play="true"
+         data-duration="3.0"
+         data-show="2"
+         data-step="2"
+         data-loop="true"
+         data-fit="contain"
+         data-aspect-ratio="3/2"
+         data-max-width="512px"
+         data-bg="#fff">
+        <button class="slider-btn fs-btn">⛶</button>
+        <button class="slider-btn close-btn" style="display: none;">×</button>
+        <button class="slider-btn prev">＜</button>
+        <div class="slider-container">
+            <div class="slide-item"><img src="fig2026011001.png" alt="1"></div>
+            <div class="slide-item"><img src="fig2026011002.png" alt="2"></div>
+        </div>
+        <button class="slider-btn next">＞</button>
+        <div class="status-icon" style="display: none;"></div>
+    </div>
+
 </body>
 </html>
+
