@@ -1,5 +1,4 @@
 document.addEventListener('DOMContentLoaded', () => {
-    // ページ内のすべての .slider-wrapper を取得して初期化
     const sliders = document.querySelectorAll('.slider-wrapper');
     sliders.forEach(wrapper => {
         initSlider(wrapper);
@@ -7,15 +6,16 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 function initSlider(wrapper) {
-    // --- 1. 設定値の読み込み (HTMLのdata属性から) ---
+    // --- 1. 設定値の読み込み ---
     const config = {
         autoPlay: wrapper.dataset.autoPlay === 'true',
         duration: parseFloat(wrapper.dataset.duration) || 3.0,
-        scrollCount: parseInt(wrapper.dataset.scrollCount) || 1,
-        loop: wrapper.dataset.loop !== 'false', // デフォルトtrue
-        aspectRatio: wrapper.dataset.aspectRatio || "512 / 763",
+        showItems: Math.max(1, parseInt(wrapper.dataset.show) || 1), // 表示枚数
+        stepItems: Math.max(1, parseInt(wrapper.dataset.step) || 1), // 移動枚数
+        loop: wrapper.dataset.loop !== 'false', 
+        aspectRatio: wrapper.dataset.aspectRatio || "512/763", // 1スロットの比率
         maxWidth: wrapper.dataset.maxWidth || null,
-        imgFit: wrapper.dataset.fit || "cover", // cover or contain
+        imgFit: wrapper.dataset.fit || "cover", 
         bgColor: wrapper.dataset.bg || "#eee"
     };
 
@@ -24,207 +24,192 @@ function initSlider(wrapper) {
     const prevBtn = wrapper.querySelector('.prev');
     const nextBtn = wrapper.querySelector('.next');
     const statusIcon = wrapper.querySelector('.status-icon');
-    
-    // フルスクリーン用ボタン
     const fsBtn = wrapper.querySelector('.fs-btn');
     const closeBtn = wrapper.querySelector('.close-btn');
+    const slideItems = container.querySelectorAll('.slide-item');
 
     // --- 3. スタイルの適用 ---
-    if (container) container.style.aspectRatio = config.aspectRatio;
     if (config.maxWidth) wrapper.style.maxWidth = config.maxWidth;
-    
-    // CSS変数をセット
     wrapper.style.setProperty('--img-fit', config.imgFit);
     wrapper.style.setProperty('--bg-color', config.bgColor);
 
-    // --- 4. 状態管理変数 ---
-    let currentIndex = 0;   // 今何枚目か（0始まり）
+    // 1アイテムの幅を設定
+    const itemWidthPercent = 100 / config.showItems;
+    slideItems.forEach(item => {
+        item.style.flex = `0 0 ${itemWidthPercent}%`;
+        item.style.width = `${itemWidthPercent}%`;
+    });
+
+    /**
+     * アスペクト比をコンテナに適用する（1スロット分 × 枚数）
+     */
+    const applyFinalRatio = (ratioStr) => {
+        if (!container) return;
+        if (ratioStr.includes('/')) {
+            const [w, h] = ratioStr.split('/').map(val => parseFloat(val.trim()));
+            if (!isNaN(w) && !isNaN(h)) {
+                // コンテナ全体の比率 = (スロット幅 * 表示枚数) / 高さ
+                const finalRatio = (w * config.showItems) / h;
+                container.style.aspectRatio = finalRatio.toString();
+            }
+        } else {
+            container.style.aspectRatio = ratioStr;
+        }
+    };
+
+    if (config.aspectRatio === "auto") {
+        const firstImg = container.querySelector('img');
+        if (firstImg) {
+            const calcAuto = () => {
+                const r = firstImg.naturalWidth / firstImg.naturalHeight;
+                applyFinalRatio(r.toString());
+            };
+            firstImg.complete ? calcAuto() : firstImg.addEventListener('load', calcAuto);
+        }
+    } else {
+        applyFinalRatio(config.aspectRatio);
+    }
+
+    // --- 4. 状態管理 ---
+    let currentIndex = 0;
     let autoSlideTimer;
     let isPlaying = config.autoPlay;
 
-    // --- 5. 補助関数 ---
+    const getTotalSlides = () => slideItems.length;
+    const getItemWidth = () => container.getBoundingClientRect().width / config.showItems;
+    
+    // 最大インデックス（空欄を作らない限界値）
+    const getMaxIndex = () => Math.max(0, getTotalSlides() - config.showItems);
 
-    // 全体の枚数を取得
-    const getTotalSlides = () => {
-        return container.querySelectorAll('.slide-item').length;
-    };
+    // スライド不要な場合の無効化処理
+    if (getTotalSlides() <= config.showItems) {
+        if (prevBtn) prevBtn.style.display = 'none';
+        if (nextBtn) nextBtn.style.display = 'none';
+        isPlaying = false;
+        container.style.overflowX = 'hidden';
+        container.style.cursor = 'default';
+    }
 
-    // 指定したインデックスへスクロール移動
     const scrollToIndex = (index, instant = false) => {
-        const slideWidth = container.clientWidth;
-        // 幅が0（非表示状態など）のときは処理しない
-        if (slideWidth === 0) return;
-
+        const itemWidth = getItemWidth();
+        if (itemWidth <= 0) return;
         container.scrollTo({
-            left: index * slideWidth,
+            left: index * itemWidth,
             behavior: instant ? 'auto' : 'smooth'
         });
     };
 
-    // --- 6. 現在位置の同期（スワイプ対応） ---
-    // ユーザーが手動でスクロールした場合、currentIndex を更新する
+    const handleResize = () => {
+        setTimeout(() => {
+            scrollToIndex(currentIndex, true);
+        }, 150);
+    };
+
+    // --- 5. 同期処理 ---
     let isScrollingTimeout;
     container.addEventListener('scroll', () => {
         clearTimeout(isScrollingTimeout);
-        // スクロール完了50ms後に位置判定
         isScrollingTimeout = setTimeout(() => {
-            const slideWidth = container.clientWidth;
-            if (slideWidth > 0) {
-                const newIndex = Math.round(container.scrollLeft / slideWidth);
-                if (currentIndex !== newIndex) {
-                    currentIndex = newIndex;
-                }
+            const itemWidth = getItemWidth();
+            if (itemWidth > 0) {
+                currentIndex = Math.round(container.scrollLeft / itemWidth);
             }
         }, 50);
     });
 
-    // --- 7. スライド操作ロジック ---
-
-    // 次へ
+    // --- 6. 操作ロジック ---
     const slideNext = (isAuto = false) => {
-        const totalSlides = getTotalSlides();
-        const maxIndex = totalSlides - 1;
+        const maxIndex = getMaxIndex();
+        if (maxIndex === 0) return;
 
-        let nextIndex = currentIndex + config.scrollCount;
-
-        // 最後を超えた場合
-        if (nextIndex > maxIndex) {
-            if (config.loop) {
-                nextIndex = 0; // 先頭へ
-            } else {
-                // ループなしなら停止
-                if (isAuto) { stopTimer(); isPlaying = false; showStatus("⏹ End"); }
-                return;
-            }
+        if (currentIndex >= maxIndex) {
+            if (config.loop) currentIndex = 0;
+            else { if (isAuto) { stopTimer(); isPlaying = false; showStatus("⏹ End"); } return; }
+        } else {
+            // ステップ分進めるが、空欄防止のため maxIndex を超えない
+            currentIndex = Math.min(currentIndex + config.stepItems, maxIndex);
         }
-        
-        currentIndex = nextIndex;
         scrollToIndex(currentIndex);
     };
 
-    // 前へ (確実に末尾へ戻るロジック)
     const slidePrev = () => {
-        const totalSlides = getTotalSlides();
-        const maxIndex = totalSlides - 1;
+        const maxIndex = getMaxIndex();
+        if (maxIndex === 0) return;
 
-        let prevIndex = currentIndex - config.scrollCount;
-
-        // 0より小さくなった場合（＝先頭より前）
-        if (prevIndex < 0) {
-            if (config.loop) {
-                prevIndex = maxIndex; // 最後の画像へ
-            } else {
-                prevIndex = 0; // 先頭で止める
-            }
+        if (currentIndex <= 0) {
+            if (config.loop) currentIndex = maxIndex;
+        } else {
+            currentIndex = Math.max(currentIndex - config.stepItems, 0);
         }
-
-        currentIndex = prevIndex;
         scrollToIndex(currentIndex);
     };
 
-    // --- 8. タイマー・状態表示制御 ---
-
+    // --- 7. タイマー・全画面制御 ---
     const startTimer = () => {
+        if (getMaxIndex() === 0) return;
         stopTimer();
-        autoSlideTimer = setInterval(() => { slideNext(true); }, config.duration * 1000);
+        autoSlideTimer = setInterval(() => slideNext(true), config.duration * 1000);
     };
-
-    const stopTimer = () => { clearInterval(autoSlideTimer); };
+    const stopTimer = () => clearInterval(autoSlideTimer);
 
     const showStatus = (text) => {
-        if(!statusIcon) return;
+        if(!statusIcon || getMaxIndex() === 0) return;
         statusIcon.textContent = text;
         statusIcon.style.display = 'block';
-        // アニメーション再発火のハック
         statusIcon.classList.remove('fade-anim');
         void statusIcon.offsetWidth; 
         statusIcon.classList.add('fade-anim');
     };
 
     const toggleAutoPlay = (e) => {
-        // ボタンクリック時は反応させない
-        if (e.target.tagName === 'BUTTON') return;
-
-        if (isPlaying) { stopTimer(); isPlaying = false; showStatus("⏸ Paused"); }
-        else { startTimer(); isPlaying = true; showStatus("▶ Playing"); }
+        if (e.target.tagName === 'BUTTON' || getMaxIndex() === 0) return;
+        isPlaying ? (stopTimer(), isPlaying = false, showStatus("⏸ Paused")) 
+                  : (startTimer(), isPlaying = true, showStatus("▶ Playing"));
     };
 
-    // --- 9. フルスクリーン機能 ---
-
-    // フルスクリーン切り替え
     const toggleFullscreen = () => {
-        // すでにAPI全画面なら解除
-        if (document.fullscreenElement) {
-            document.exitFullscreen().catch(err => console.log(err));
-            return;
-        }
-
-        // ブラウザの標準機能(API)が使えるか？
-        if (wrapper.requestFullscreen) {
-            wrapper.requestFullscreen().then(() => {
-                // サイズが変わるので位置合わせ
-                setTimeout(() => scrollToIndex(currentIndex, true), 100);
-            }).catch(() => {
-                // エラーならCSSモードへ
+        if (document.fullscreenElement) document.exitFullscreen();
+        else {
+            if (wrapper.requestFullscreen) {
+                wrapper.requestFullscreen().catch(() => enterCssFullscreen());
+            } else {
                 enterCssFullscreen();
-            });
-        } else {
-            // iPhoneなどはCSSモードへ
-            enterCssFullscreen();
+            }
         }
     };
 
-    // CSS擬似フルスクリーン開始
     const enterCssFullscreen = () => {
         wrapper.classList.add('ios-fullscreen');
-        document.body.style.overflow = 'hidden'; // 背景固定
-        // サイズ変更に合わせて位置修正
-        setTimeout(() => scrollToIndex(currentIndex, true), 100);
+        document.body.style.overflow = 'hidden'; 
+        handleResize();
     };
 
-    // CSS擬似フルスクリーン解除
     const exitCssFullscreen = () => {
         wrapper.classList.remove('ios-fullscreen');
         document.body.style.overflow = '';
-        setTimeout(() => scrollToIndex(currentIndex, true), 100);
+        handleResize();
     };
 
-    // ブラウザのフルスクリーン状態変化検知（ESCキー対応）
-    document.addEventListener('fullscreenchange', () => {
-        if (!document.fullscreenElement) {
-            // 戻ってきたときに位置合わせ
-            setTimeout(() => scrollToIndex(currentIndex, true), 100);
-        }
-    });
+    window.addEventListener('resize', handleResize);
+    document.addEventListener('fullscreenchange', handleResize);
 
-
-    // --- 10. イベントリスナー登録 ---
-
-    if(nextBtn) nextBtn.addEventListener('click', () => { 
+    if(nextBtn) nextBtn.addEventListener('click', (e) => { 
+        e.stopPropagation();
         if (isPlaying) { stopTimer(); startTimer(); } 
         slideNext(false); 
     });
-
-    if(prevBtn) prevBtn.addEventListener('click', () => { 
+    if(prevBtn) prevBtn.addEventListener('click', (e) => { 
+        e.stopPropagation();
         if (isPlaying) { stopTimer(); startTimer(); } 
         slidePrev(); 
     });
-
-    // 拡大ボタン
-    if(fsBtn) fsBtn.addEventListener('click', toggleFullscreen);
-
-    // 閉じるボタン（スマホ/CSSモード用）
-    if(closeBtn) closeBtn.addEventListener('click', () => {
-        if (document.fullscreenElement) {
-            document.exitFullscreen();
-        } else {
-            exitCssFullscreen();
-        }
+    if(fsBtn) fsBtn.addEventListener('click', (e) => { e.stopPropagation(); toggleFullscreen(); });
+    if(closeBtn) closeBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        document.fullscreenElement ? document.exitFullscreen() : exitCssFullscreen();
     });
-
-    // 画像クリックで一時停止/再開
     if(container) container.addEventListener('click', toggleAutoPlay);
 
-    // --- 11. 初回起動 ---
     if (isPlaying) startTimer();
 }
+
