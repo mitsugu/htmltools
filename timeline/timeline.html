@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sumisaki Incident Archive - Simple Edition</title>
+    <link rel="stylesheet" href="timeline.css">
+    <script src="timeline.js"></script>
+</head>
+<body>
+
+    <div class="timeline-container">
+        <!-- 垂直線（左側に固定） -->
+        <div class="timeline-line"></div>
+
+        <!-- タイムライン項目（これをコピーして増やせます） -->
+        <div class="timeline-item" data-duration="0.8s">
+            <div class="timeline-dot"></div> <!-- 線上のポインター -->
+            <div class="timeline-content">
+                <span class="date">1999.03.21 10:30</span>
+                <h3>住崎エントリー</h3>
+                <p>潜水開始。すべてのカードは線の右側に配置されます。</p>
+            </div>
+        </div>
+
+        <!-- 動きを遅くしたい場合：data-duration を長めに -->
+        <div class="timeline-item" data-duration="1.5s" data-delay="0.3s">
+            <div class="timeline-dot"></div>
+            <div class="timeline-content">
+                <span class="date">1999.03.21 10:45</span>
+                <h3>異常の検知</h3>
+                <p>data-delay により、スクロールしてから一呼吸置いて現れます。</p>
+            </div>
+        </div>
+
+        <!-- 大きく動かしたい場合：data-distance を長めに -->
+        <div class="timeline-item" data-distance="150px">
+            <div class="timeline-dot"></div>
+            <div class="timeline-content">
+                <span class="date">1999.03.21 11:00</span>
+                <h3>緊急判断</h3>
+                <p>右側から大きくスライドして入ってきます。</p>
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>
