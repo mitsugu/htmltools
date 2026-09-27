@@ -8,15 +8,15 @@
   --left-text: #333333;
 
   /* 右側（自分）の設定 */
-  /*
-  --right-bg: #0084ff;
-  */
   --right-bg: silver;
   --right-text: #333333;
 
   /* 共通設定 */
   --bubble-radius: 18px;
   --tail-size: 10px; /* しっぽの大きさ */
+
+  /* ★アイコンの縦位置（上揃え: flex-start / 下揃え: flex-end） */
+  --icon-vertical-align: flex-start; 
 }
 
 /* --- スタイル実装 --- */
@@ -30,7 +30,8 @@
 
 .chat-box {
   display: flex;
-  align-items: flex-end;
+  /* ★変数を使って位置を指定します */
+  align-items: var(--icon-vertical-align);
   max-width: 85%;
 }
 
@@ -68,7 +69,8 @@
   .bubble::after {
     content: "";
     position: absolute;
-    bottom: 10px;
+    /* ★しっぽの位置も、アイコンが上に来るなら「上基準」に変更すると綺麗です */
+    top: 10px; 
     border: var(--tail-size) solid transparent;
   }
 
