@@ -1,6 +1,6 @@
 /* =========================================
    image-unit
-   fullscreen + zoom + pan
+   fullscreen + zoom + pan + pinch
    ========================================= */
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -248,8 +248,8 @@ document.addEventListener('DOMContentLoaded', () => {
          * anchorX / anchorY が指定された場合、
          * その位置を中心にズームする。
          *
-         * これによりマウスポインタ位置を
-         * 基準にしたズームができる。
+         * これによりマウスポインタ位置や
+         * ピンチ中心を基準にしたズームができる。
          */
         const setZoom = (
             newZoom,
@@ -449,6 +449,274 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
         /* =====================================
+           Pointer / Pinch 状態
+           ===================================== */
+
+        /*
+         * 現在押されている pointer を保持する。
+         *
+         * pointerId:
+         *   指1本
+         *   指2本
+         *   マウス
+         *
+         * などを区別するために使う。
+         */
+        const activePointers = new Map();
+
+
+        /*
+         * ピンチ中か。
+         */
+        let pinching = false;
+
+
+        /*
+         * ピンチ開始時の距離。
+         */
+        let pinchStartDistance = 0;
+
+
+        /*
+         * ピンチ開始時の zoom。
+         */
+        let pinchStartZoom = 1;
+
+
+        /*
+         * 前回の2本指の中心座標。
+         *
+         * ピンチ中のパン処理に使用。
+         */
+        let pinchLastMidX = 0;
+        let pinchLastMidY = 0;
+
+
+        /* =====================================
+           Pointer 情報取得
+           ===================================== */
+
+        const getPointerPair = () => {
+
+            if (activePointers.size < 2) {
+                return null;
+            }
+
+            const points =
+                Array.from(
+                    activePointers.values()
+                );
+
+            return [
+                points[0],
+                points[1]
+            ];
+        };
+
+
+        /* =====================================
+           2点間距離
+           ===================================== */
+
+        const getPointerDistance = (p1, p2) => {
+
+            return Math.hypot(
+                p2.x - p1.x,
+                p2.y - p1.y
+            );
+        };
+
+
+        /* =====================================
+           2点の中心
+           ===================================== */
+
+        const getPointerMidpoint = (p1, p2) => {
+
+            return {
+                x: (p1.x + p2.x) / 2,
+                y: (p1.y + p2.y) / 2
+            };
+        };
+
+
+        /* =====================================
+           ピンチ開始
+           ===================================== */
+
+        const startPinch = () => {
+
+            const pair =
+                getPointerPair();
+
+            if (!pair) {
+                return;
+            }
+
+            const [p1, p2] = pair;
+
+            const rect =
+                figure.getBoundingClientRect();
+
+            const midpoint =
+                getPointerMidpoint(p1, p2);
+
+
+            /*
+             * 2本の指の距離を保存。
+             */
+            pinchStartDistance =
+                getPointerDistance(
+                    p1,
+                    p2
+                );
+
+
+            /*
+             * 現在の zoom を保存。
+             */
+            pinchStartZoom = zoom;
+
+
+            /*
+             * 画面上の中心位置。
+             */
+            pinchLastMidX =
+                midpoint.x - rect.left;
+
+            pinchLastMidY =
+                midpoint.y - rect.top;
+
+
+            /*
+             * 1本指ドラッグを中断。
+             */
+            dragging = false;
+
+            pointerId = null;
+
+            stage.classList.remove(
+                'is-dragging'
+            );
+
+
+            pinching = true;
+        };
+
+
+        /* =====================================
+           ピンチ中
+           ===================================== */
+
+        const updatePinch = () => {
+
+            const pair =
+                getPointerPair();
+
+            if (
+                !pair ||
+                pinchStartDistance <= 0
+            ) {
+                return;
+            }
+
+            const [p1, p2] = pair;
+
+            const rect =
+                figure.getBoundingClientRect();
+
+            const midpoint =
+                getPointerMidpoint(p1, p2);
+
+
+            /*
+             * 現在の中心。
+             */
+            const currentMidX =
+                midpoint.x - rect.left;
+
+            const currentMidY =
+                midpoint.y - rect.top;
+
+
+            /*
+             * 現在の指の距離。
+             */
+            const currentDistance =
+                getPointerDistance(
+                    p1,
+                    p2
+                );
+
+
+            /*
+             * 距離の変化率を zoom に変換。
+             */
+            let newZoom =
+                pinchStartZoom *
+                (
+                    currentDistance /
+                    pinchStartDistance
+                );
+
+
+            newZoom = Math.max(
+                MIN_ZOOM,
+                Math.min(MAX_ZOOM, newZoom)
+            );
+
+
+            /*
+             * ピンチ中心を基準にズーム。
+             */
+            setZoom(
+                newZoom,
+                currentMidX,
+                currentMidY
+            );
+
+
+            /*
+             * 2本指の中心移動を
+             * パンとして扱う。
+             */
+            const dx =
+                currentMidX -
+                pinchLastMidX;
+
+            const dy =
+                currentMidY -
+                pinchLastMidY;
+
+
+            /*
+             * 画像を指についてこさせる。
+             *
+             * 指が右へ動く
+             *   → scrollLeft を減らす
+             *
+             * 指が下へ動く
+             *   → scrollTop を減らす
+             */
+            figure.scrollLeft -= dx;
+            figure.scrollTop -= dy;
+
+
+            clampScroll();
+
+
+            /*
+             * 次回の基準位置。
+             */
+            pinchLastMidX =
+                currentMidX;
+
+            pinchLastMidY =
+                currentMidY;
+        };
+
+
+        /* =====================================
            fullscreen 開始
            ===================================== */
 
@@ -493,6 +761,19 @@ document.addEventListener('DOMContentLoaded', () => {
             );
 
             /*
+             * Pointer 状態を完全にリセット。
+             */
+            activePointers.clear();
+
+            dragging = false;
+            pinching = false;
+
+            pointerId = null;
+
+            pinchStartDistance = 0;
+            pinchStartZoom = 1;
+
+            /*
              * スクロール位置をリセット。
              */
             figure.scrollLeft = 0;
@@ -508,8 +789,11 @@ document.addEventListener('DOMContentLoaded', () => {
             'fullscreenchange',
             () => {
 
-                if (document.fullscreenElement === figure) {
+                if (
+                    document.fullscreenElement === figure
+                ) {
                     enterFullscreenLayout();
+
                 } else {
                     leaveFullscreenLayout();
                 }
@@ -529,6 +813,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     document.webkitFullscreenElement === figure
                 ) {
                     enterFullscreenLayout();
+
                 } else {
                     leaveFullscreenLayout();
                 }
@@ -542,56 +827,61 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (button) {
 
-            button.addEventListener('click', event => {
+            button.addEventListener(
+                'click',
+                event => {
 
-                event.preventDefault();
-                event.stopPropagation();
-
-
-                /*
-                 * fullscreen 無効なら何もしない。
-                 */
-                if (
-                    figure.getAttribute(
-                        'data-fullscreen'
-                    ) !== 'true'
-                ) {
-                    return;
-                }
+                    event.preventDefault();
+                    event.stopPropagation();
 
 
-                /*
-                 * 既に fullscreen なら終了。
-                 */
-                if (isFullscreen()) {
-
-                    if (document.exitFullscreen) {
-                        document.exitFullscreen();
-
-                    } else if (
-                        document.webkitExitFullscreen
+                    /*
+                     * fullscreen 無効なら何もしない。
+                     */
+                    if (
+                        figure.getAttribute(
+                            'data-fullscreen'
+                        ) !== 'true'
                     ) {
-                        document.webkitExitFullscreen();
+                        return;
                     }
 
-                    return;
+
+                    /*
+                     * 既に fullscreen なら終了。
+                     */
+                    if (isFullscreen()) {
+
+                        if (document.exitFullscreen) {
+
+                            document.exitFullscreen();
+
+                        } else if (
+                            document.webkitExitFullscreen
+                        ) {
+
+                            document.webkitExitFullscreen();
+                        }
+
+                        return;
+                    }
+
+
+                    /*
+                     * figure を fullscreen にする。
+                     */
+                    if (figure.requestFullscreen) {
+
+                        figure.requestFullscreen();
+
+                    } else if (
+                        figure.webkitRequestFullscreen
+                    ) {
+
+                        figure.webkitRequestFullscreen();
+                    }
                 }
-
-
-                /*
-                 * figure を fullscreen にする。
-                 */
-                if (figure.requestFullscreen) {
-
-                    figure.requestFullscreen();
-
-                } else if (
-                    figure.webkitRequestFullscreen
-                ) {
-
-                    figure.webkitRequestFullscreen();
-                }
-            });
+            );
         }
 
 
@@ -695,36 +985,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
         /* =====================================
-           マウスドラッグ / タッチスワイプ
+           Pointer Down
            ===================================== */
-
-        let dragging = false;
-
-        let pointerId = null;
-
-        let startX = 0;
-        let startY = 0;
-
-        let startScrollLeft = 0;
-        let startScrollTop = 0;
-
 
         stage.addEventListener(
             'pointerdown',
             event => {
 
                 if (!isFullscreen()) {
-                    return;
-                }
-
-
-                /*
-                 * 左ボタン以外のマウスは無視。
-                 */
-                if (
-                    event.pointerType === 'mouse' &&
-                    event.button !== 0
-                ) {
                     return;
                 }
 
@@ -741,12 +1009,65 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
 
 
+                /*
+                 * マウスは左ボタンのみ。
+                 */
+                if (
+                    event.pointerType === 'mouse' &&
+                    event.button !== 0
+                ) {
+                    return;
+                }
+
+
+                /*
+                 * Pointer 登録。
+                 */
+                activePointers.set(
+                    event.pointerId,
+                    {
+                        x: event.clientX,
+                        y: event.clientY
+                    }
+                );
+
+
+                /*
+                 * pointer capture。
+                 */
+                stage.setPointerCapture(
+                    event.pointerId
+                );
+
+
+                /* -----------------------------
+                   2本目が入った
+                   ----------------------------- */
+
+                if (activePointers.size === 2) {
+
+                    startPinch();
+
+                    event.preventDefault();
+
+                    return;
+                }
+
+
+                /* -----------------------------
+                   1本指ドラッグ開始
+                   ----------------------------- */
+
                 dragging = true;
 
-                pointerId = event.pointerId;
+                pointerId =
+                    event.pointerId;
 
-                startX = event.clientX;
-                startY = event.clientY;
+                startX =
+                    event.clientX;
+
+                startY =
+                    event.clientY;
 
                 startScrollLeft =
                     figure.scrollLeft;
@@ -760,22 +1081,62 @@ document.addEventListener('DOMContentLoaded', () => {
                 );
 
 
-                /*
-                 * pointer capture により
-                 * stage の外へ出ても追跡できる。
-                 */
-                stage.setPointerCapture(
-                    pointerId
-                );
-
                 event.preventDefault();
             }
         );
 
 
+        /* =====================================
+           Pointer Move
+           ===================================== */
+
         stage.addEventListener(
             'pointermove',
             event => {
+
+                if (!isFullscreen()) {
+                    return;
+                }
+
+
+                /*
+                 * Pointer 座標更新。
+                 */
+                if (
+                    activePointers.has(
+                        event.pointerId
+                    )
+                ) {
+                    activePointers.set(
+                        event.pointerId,
+                        {
+                            x: event.clientX,
+                            y: event.clientY
+                        }
+                    );
+                }
+
+
+                /* -----------------------------
+                   ピンチ処理
+                   ----------------------------- */
+
+                if (
+                    pinching &&
+                    activePointers.size >= 2
+                ) {
+
+                    updatePinch();
+
+                    event.preventDefault();
+
+                    return;
+                }
+
+
+                /* -----------------------------
+                   1本指ドラッグ
+                   ----------------------------- */
 
                 if (
                     !dragging ||
@@ -811,48 +1172,103 @@ document.addEventListener('DOMContentLoaded', () => {
         );
 
 
-        const finishDrag = event => {
+        /* =====================================
+           Pointer Up / Cancel
+           ===================================== */
 
-            if (
-                !dragging ||
-                (
-                    event.pointerId !== undefined &&
-                    event.pointerId !== pointerId
-                )
-            ) {
-                return;
-            }
+        const finishPointer = event => {
 
-
-            dragging = false;
-
-            stage.classList.remove(
-                'is-dragging'
+            /*
+             * 今離れた pointer を削除。
+             */
+            activePointers.delete(
+                event.pointerId
             );
 
 
+            /* -----------------------------
+               ピンチ中
+               2本 → 1本
+               ----------------------------- */
+
             if (
-                pointerId !== null &&
-                stage.hasPointerCapture(pointerId)
+                pinching &&
+                activePointers.size === 1
             ) {
-                stage.releasePointerCapture(
-                    pointerId
-                );
+
+                pinching = false;
+
+
+                /*
+                 * 残った1本の指で、
+                 * そのままパン操作へ移行。
+                 */
+                const remaining =
+                    Array.from(
+                        activePointers.entries()
+                    )[0];
+
+
+                if (remaining) {
+
+                    const [id, point] =
+                        remaining;
+
+
+                    pointerId = id;
+
+                    startX = point.x;
+                    startY = point.y;
+
+                    startScrollLeft =
+                        figure.scrollLeft;
+
+                    startScrollTop =
+                        figure.scrollTop;
+
+                    dragging = true;
+
+
+                    stage.classList.add(
+                        'is-dragging'
+                    );
+
+                    return;
+                }
             }
 
 
-            pointerId = null;
+            /* -----------------------------
+               すべての pointer が離れた
+               ----------------------------- */
+
+            if (
+                activePointers.size === 0
+            ) {
+
+                pinching = false;
+
+                dragging = false;
+
+                pointerId = null;
+
+                pinchStartDistance = 0;
+
+                stage.classList.remove(
+                    'is-dragging'
+                );
+            }
         };
 
 
         stage.addEventListener(
             'pointerup',
-            finishDrag
+            finishPointer
         );
 
         stage.addEventListener(
             'pointercancel',
-            finishDrag
+            finishPointer
         );
 
 
@@ -889,7 +1305,9 @@ document.addEventListener('DOMContentLoaded', () => {
                    ←
                    ----------------------------- */
 
-                if (event.key === 'ArrowLeft') {
+                if (
+                    event.key === 'ArrowLeft'
+                ) {
 
                     event.preventDefault();
 
@@ -901,7 +1319,9 @@ document.addEventListener('DOMContentLoaded', () => {
                    →
                    ----------------------------- */
 
-                if (event.key === 'ArrowRight') {
+                if (
+                    event.key === 'ArrowRight'
+                ) {
 
                     event.preventDefault();
 
@@ -913,7 +1333,9 @@ document.addEventListener('DOMContentLoaded', () => {
                    ↑
                    ----------------------------- */
 
-                if (event.key === 'ArrowUp') {
+                if (
+                    event.key === 'ArrowUp'
+                ) {
 
                     event.preventDefault();
 
@@ -925,7 +1347,9 @@ document.addEventListener('DOMContentLoaded', () => {
                    ↓
                    ----------------------------- */
 
-                if (event.key === 'ArrowDown') {
+                if (
+                    event.key === 'ArrowDown'
+                ) {
 
                     event.preventDefault();
 
@@ -954,7 +1378,9 @@ document.addEventListener('DOMContentLoaded', () => {
                    -
                    ----------------------------- */
 
-                if (event.key === '-') {
+                if (
+                    event.key === '-'
+                ) {
 
                     event.preventDefault();
 
